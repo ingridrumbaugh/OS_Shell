@@ -1,0 +1,25 @@
+Project Notes from Moodle: 
+
+Unix Shell Notes: 
+- Command line interpreter (shell) that provides a cl ui for unix-like os's
+
+Concept of a shell
+- any program that users employ to type commands 
+- hides details and manages tech details of os kernel interface 
+- user interactively logs into system 
+- stores user profile (local passwd) 
+
+Type of shell - Bourne-Again Shell (Bash) 
+- written as a part of the GNU project to provide a superset of bourne shell functionality 
+- default interactive shell for users on linux 
+https://en.wikipedia.org/wiki/Bash_(Unix_shell)
+
+Config Files 
+- config files contain commands for a particular shell 
+- set things like $PATH 
+- config files for popular shells: https://en.wikipedia.org/wiki/Unix_shell
+
+
+Pipeline (Unix) Notes: 
+- 
+
