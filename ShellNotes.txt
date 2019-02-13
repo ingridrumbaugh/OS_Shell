@@ -21,5 +21,75 @@ Config Files
 
 
 Pipeline (Unix) Notes: 
-- 
+- pipeline is a mechanism for inter-process comms using message passing 
+- a set of processes chained together by their standard streams 
+
+stdout --> stdin 
+
+- 1st and 2nd processes executed concurrently 
+
+Anonymous Pipes
+- data written by one process is buffered by OS until it is read by next process
+- uni-directional channel disappears when processes are completed 
+
+process1 | process2 | process3 
+
+Example: list files (ls), retain only lines containing "key" (grep), 
+view result as scrolling page (less) 
+
+ls -l | grep key | less 
+
+By default stderr of processess in pipeline are not passed thru pipe 
+However, "|&" signifies that the standard error stream should also be merged with stdout and fed to next process 
+
+"How Linux Pipes Work Under the Hood" - Brandon Wamboldt 
+https://brandonwamboldt.ca/how-linux-pipes-work-under-the-hood-1518/
+
+How Pipes are Implemented by the Kernel
+- Linux has virtual file sys module called "pipefs" 
+- "pipefs" mounted alongside root file system (pipe's root is pipe:)
+- entrypoint to pipefs is pipe(2) syscall 
+- that syscall is used by shells to implement piping 
+- it creates a new file in pipefs 
+
+Pipe I/O, buffering, capacity 
+- when the pipe is full, a write(2) will block
+- applications shouldn't rely on a pipe having a particular size 
+
+How Shells Do Piping 
+- Parent process calls pipe(2) once for ea 2 processes that get piped together 
+- Then bash forks itself once for each process
+- Each child will run 1 command 
+- Before they run their commands they overwrite one of stdin or stdout 
+
+The kernel schedules processes so they roughly run in parallel 
+
+Named vs. Unnamed Pipes
+- Example used anonymous pipes 
+- Temporary and discarded once program finishes (These are the most common)
+
+- Named pipes: FIFOs get created as a named file on hard disk 
+- allow multiple unrelated programs to open + use them 
+
+Example: mkfifo ~/test_pipe 
+
+Work relatively the same as unnamed. 
+You can open them using open(2), must open the read end using 
+O_RDONLY or write end using O_WRONLY
+
+- Most OS's implement unidir. pipes so you can't open them in both read/write mode 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
