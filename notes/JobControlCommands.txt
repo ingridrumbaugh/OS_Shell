@@ -1,0 +1,62 @@
+Job Control Commands Notes 
+https://www.tldp.org/LDP/abs/html/x9644.html
+
+jobs
+- lists the jobs running in the background, giving job number
+- ** Not as useful as ps ** 
+- job # is the job maintained by the current shell! 
+- NOT the same as PID 
+
+kill %1 or kill 1384 
+- to kill a job or proccess 
+
+disown 
+- remove job(s) from shell's table of active jobs 
+
+fg, bg 
+- fg switches a job running in background --> foreground
+- bg restarts a suspended job and runs it in the background 
+- if no job #, then fg or bg acts on currently running job 
+
+wait 
+- Suspend script exec until all background jobs have terminated 
+- or specify PID and will exec after it terminates 
+- returns exit status of waited-for cmd 
+
+- can use the wait cmd to prevent a script from exiting before a bkgnd job finishes executing 
+
+suspend
+- similar to Ctrl-Z but suspends the shell 
+
+logout 
+- exit a login shell 
+
+times 
+- gives stats on sys time elapsed when executing commands 
+
+kill
+- forcibly terminate a process by sending terminate signal 
+
+kill -l lists all signals 
+kill -9 is a sure kill which terminates a process that refuses to die 
+killall kills a running process by name rather than proccess ID 
+
+Job Identifiers: 
+
+%N  Job Number [N] 
+%S  Invocation (cmd line) of job begins w string S 
+%?S Invocation (cmd line) of job contains within it a string S
+%%  "current" job 
+%+  "current" job 
+%-  last job 
+$!  last background process 
+
+
+
+
+
+
+
+
+
+
