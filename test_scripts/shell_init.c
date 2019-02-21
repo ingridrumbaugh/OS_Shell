@@ -17,6 +17,8 @@
 #define clear() printf("\033[H\033[J")
 // hold the current line being processed 
 static char *line = (char *)NULL; 
+#define maxletters 1000
+#define maxcommands 100
 
 void init_shell() {
     clear();
@@ -63,6 +65,29 @@ void print_man() {
     printf("\n**Pipe Handling Also Supported**\n");
     printf("----------------------------------"); 
     return;
+}
+
+void parse_out_spaces(char* str, char** parsed) {
+
+    for (int i = 0; i < 100; i ++) {
+        // find spaces 
+        parsed[i] = strsep(&str, " "); 
+        if (parsed[i] == NULL)
+            break;
+        if (strlen(parsed[i]) == 0)
+            i --; 
+    }
+}
+
+// handle pipes here later 
+int proccess_cmd(char* str, char** parsed) {
+    parse_out_spaces(str, parsed); 
+    int temp = -1; 
+    temp = set_cmds_handler(parsed); 
+    if (temp)
+        return 0; 
+    else 
+        return 1; 
 }
 
 int set_cmds_handler(char** curr_cmd) {
@@ -117,13 +142,6 @@ int set_cmds_handler(char** curr_cmd) {
     return 0;
 }
 
-int main() {
-    init_shell(); 
-    //set_list_cmds(); // just set the preset commands, doesn't print anything
-    process_input_line(line); 
-    return 0;
-}
-
 // NOTE I ALSO WANT TO  IMPLEMENT printenv FUNCTIONALITY IT'S COOL 
 void set_env_var(char* newvar) {
 
@@ -131,4 +149,47 @@ void set_env_var(char* newvar) {
 
 void rm_env_var(char* oldchar) {
 
+}
+
+void execute_sys_command(char** temp_parsed) {
+    // This is not a fork, it's a trident 
+    // Tridents are for ruling the sea 
+    pid_t pid = fork(); 
+
+    if (pid == -1) {
+        // failed 
+        printf("\nFailed Fork- Maybe it's a Spoon"); 
+        return;
+    } else if (pid == 0) {
+        if (execvp(temp_parsed[0], temp_parsed) < 0) {
+            printf("\nError Executing Command"); 
+        }
+        exit(0); 
+    } else {
+        // wait for child to terminate sequence 
+        wait(NULL);
+        return; 
+    }
+}
+
+int main() {
+    char inputString[maxletters];
+    char *parsed[maxcommands];
+    //char *parsedPipes[maxcommands]; 
+    int pipe_flag = 0; 
+
+    init_shell(); 
+    while (1) {
+        // Make sure the current line is 
+        if (process_input_line(inputString))
+        continue; 
+
+        pipe_flag = proccess_cmd(inputString, parsed); 
+        // if pipe_flag is 0, it's a built in command and will be executed
+        // if pipe_flag is 1, then go to sys command 
+        if (pipe_flag == 1) 
+            // execute arg(parsed) 
+            execute_sys_command(parsed); 
+    }
+    return 0;
 }
