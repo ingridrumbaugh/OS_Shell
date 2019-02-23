@@ -32,7 +32,7 @@ void init_shell() {
     printf("\n|                              |\n"); 
     printf("|------------------------------|\n");
     printf("|                              |\n"); 
-    printf("|----  >> man for cmd list ----|\n");
+    printf("|---  >> man to open manual ---|\n");
     printf("|                              |\n"); 
     printf("|------------------------------|\n\n\n");
 }

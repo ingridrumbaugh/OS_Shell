@@ -4,9 +4,28 @@
 #include <unistd.h> // int chdir(const char *path); 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 char *read_a_line(void);
 
 char **parse_a_line(char *line);
 
 int trident(char **args);
+
+void init_shell(); 
+
+void print_man();
+
+int set_cmds_handler(char** curr_cmd);
+
+char *listofcommands[];
+
+int (*builtin_func[]) (char**);
+
+int get_num_commands();
+
+int launch_shell(char **args);
+
+int echo_path(char **args);
+
+void set_env(char *args);
