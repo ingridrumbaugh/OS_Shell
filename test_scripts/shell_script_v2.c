@@ -131,11 +131,13 @@ char **parse_a_line(char *line) {
         fprintf(stderr, "Memory Allocation Error\n"); 
         exit(EXIT_FAILURE); 
     }
-
+    // the line is trying to set an env var 
+    if (strstr(line, "=") != NULL) {
+        parse_equals(line);
+    }
     token = strtok(line, tokendelims);
     while (token != NULL) {
-        tokens[line_position] = token; 
-        // CHECK FOR SET ENV VAR HERE "="
+        tokens[line_position] = token;
         line_position ++; 
         // if we've exceeded the buffer, 
         if (line_position >= buffer_size) {
@@ -165,14 +167,19 @@ int trident(char **args) {
         //     if (strcmp(args[1], listofcommands[i]) == 0) {
         //         return (*builtin_func[i])(args); 
         //     }
-        // } else IF 
+        // } else 
         if (strcmp(args[0], listofcommands[i]) == 0) { 
             return (*builtin_func[i])(args);
             // else if (strstr(args[0], "=") != NULL) {
             //     printf("parse equals you dumbass"); 
             //     parse_equals(args); // from here call env var stuff
             // }
+        } else if (args[1] != NULL) {
+            if (strcmp(args[1], listofcommands[i]) == 0) {
+                return (*builtin_func[i])(args); 
+            }
         }
+
     }
     return launch_shell(args); 
 }
