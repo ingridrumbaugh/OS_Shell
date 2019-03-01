@@ -93,12 +93,13 @@ int echo_path() {
 }
 
 void set_env(char *name, char *val) {
-    // setenv(name, val, 1);
-    // printf("Setting env var: %s\n", name); 
-    // printf("equals: %s\n", val);  
-    // if (val == NULL) {
-    //     unsetenv(name); 
-    // }
+    if (val[0] == 0) {
+        unsetenv(name); 
+    } else {
+        setenv(name, val, 1);
+        printf("Setting env var: %s\n", name); 
+        printf("equals: %s\n", val);
+    }  
 }
 
 char *read_a_line(void) {
@@ -110,15 +111,23 @@ char *read_a_line(void) {
 }
 
 char *parse_equals(char *temp_arg) {
-    // char *var_name;
-    // char *var_path; 
-    // char delim[] = "="; 
-    // char *token = strtok(temp_arg, delim); 
-    // // check if this env var 
-    // var_name = token; 
-    // token = strtok(NULL, delim); 
-    // var_path = token;
-    // set_env(var_name, var_path); 
+    char *var_name;
+    char *var_path; 
+    char delim[] = "="; 
+    char *token = strtok(temp_arg, delim); 
+    // check if this env var 
+    var_name = token; 
+    token = strtok(NULL, delim); 
+    var_path = token;
+
+    while(*token != 0) {
+        if (*token == '\n') {
+            //fprintf(stderr, "found new line!!!\n");
+            *token = 0;
+        }
+        token ++;
+    }
+    set_env(var_name, var_path); 
 }
 
 char **parse_a_line(char *line) {
@@ -134,24 +143,30 @@ char **parse_a_line(char *line) {
     // the line is trying to set an env var 
     if (strstr(line, "=") != NULL) {
         parse_equals(line);
-    }
-    token = strtok(line, tokendelims);
-    while (token != NULL) {
-        tokens[line_position] = token;
-        line_position ++; 
-        // if we've exceeded the buffer, 
-        if (line_position >= buffer_size) {
-            buffer_size += tokenbuffersize;
-            tokens = realloc(tokens, buffer_size *sizeof(char*)); 
-            if (!tokens) {
-                fprintf(stderr, "Memmory Allocation Error\n"); 
-                exit(EXIT_FAILURE); 
+ 
+    } else if (strstr(line, "|") != NULL) {
+        // cal fn to parse out ' ' space 
+        // add each arg to array args[] 
+        // execute 
+    } else {
+        token = strtok(line, tokendelims);
+        while (token != NULL) {
+            tokens[line_position] = token;
+            line_position ++; 
+            // if we've exceeded the buffer, 
+            if (line_position >= buffer_size) {
+                buffer_size += tokenbuffersize;
+                tokens = realloc(tokens, buffer_size *sizeof(char*)); 
+                if (!tokens) {
+                    fprintf(stderr, "Memmory Allocation Error\n"); 
+                    exit(EXIT_FAILURE); 
+                }
             }
+            token = strtok(NULL, tokendelims); 
         }
-        token = strtok(NULL, tokendelims); 
     }
     tokens[line_position] = NULL;
-    return tokens;
+    return tokens; 
 }
 
 int trident(char **args) {
@@ -160,26 +175,15 @@ int trident(char **args) {
     if (args[0] == NULL) {
         return 1; 
     }
-
     for (i = 0; i < get_num_commands(); i ++) {
-        // Echo $PATH 
-        // if (sizeof(args) >= 2) {
-        //     if (strcmp(args[1], listofcommands[i]) == 0) {
-        //         return (*builtin_func[i])(args); 
-        //     }
-        // } else 
+        
         if (strcmp(args[0], listofcommands[i]) == 0) { 
             return (*builtin_func[i])(args);
-            // else if (strstr(args[0], "=") != NULL) {
-            //     printf("parse equals you dumbass"); 
-            //     parse_equals(args); // from here call env var stuff
-            // }
         } else if (args[1] != NULL) {
             if (strcmp(args[1], listofcommands[i]) == 0) {
                 return (*builtin_func[i])(args); 
             }
         }
-
     }
     return launch_shell(args); 
 }
@@ -206,6 +210,53 @@ int launch_shell(char **args) {
     return 1; 
 }
 
+
+int fork_pipes(char **args) {
+    int pipes[4]; 
+    pipe(pipes); // set up 1st pipe
+    pipe(pipes+2); 
+
+    if (fork() == 0) {
+        dup2(pipes[1], 1); 
+
+        close(pipes[0]);
+        close(pipes[1]);
+        close(pipes[2]);
+        close(pipes[3]);
+
+        execvp(args[0], args); 
+    } else {
+        // fork 2nd child 
+        if (fork() == 0) {
+            dup2(pipes[0], 0); 
+            dup2(pipes[3], 1); 
+
+            close(pipes[0]);
+            close(pipes[1]);
+            close(pipes[2]);
+            close(pipes[3]);
+
+            execvp(args[0], args); 
+        } else {
+        // fork 3rd child if exists 
+            if (fork() == 0) {
+                dup2(pipes[2], 0); 
+
+                close(pipes[0]);
+                close(pipes[1]);
+                close(pipes[2]);
+                close(pipes[3]);
+
+                execvp(args[0], args);
+            }
+        } 
+    }
+    close(pipes[0]);
+    close(pipes[1]);
+    close(pipes[2]);
+    close(pipes[3]);
+}
+
 int main(int argc, char **argv) {
     char *line;
     char **args;
@@ -218,8 +269,11 @@ int main(int argc, char **argv) {
         printf("lafshell> "); 
         line = read_a_line(); 
         args = parse_a_line(line); 
-        status = trident(args); 
 
+        if (args[0] != NULL) {
+            status = trident(args); 
+        }
+        
         free(line);
         free(args); 
     } while (status); 

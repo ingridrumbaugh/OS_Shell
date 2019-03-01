@@ -4,7 +4,9 @@
 #include <unistd.h> // int chdir(const char *path); 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat> 
 #include <signal.h>
+#include <fcntl.h>
 
 char *read_a_line(void);
 
@@ -31,3 +33,5 @@ int echo_path();
 void set_env(char *name, char *val);
 
 char *parse_equals(char *temp_arg);
+
+int fork_pipes(char *args); 
