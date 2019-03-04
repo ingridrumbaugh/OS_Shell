@@ -35,3 +35,7 @@ void set_env(char *name, char *val);
 char *parse_equals(char *temp_arg);
 
 int fork_pipes(char *args); 
+
+int fork_pipes2(char *args[]);
+
+char *parse_pipe(char *temp_line);
