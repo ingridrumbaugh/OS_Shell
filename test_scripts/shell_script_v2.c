@@ -1,11 +1,3 @@
-// ADD MAN PAGE PRINT FUNCTION AND START PAGE 
-// ADD ENVIRONMENT VAR FUNCTIONALITY 
-//int setenv(const char *name, const char *value, int overwrite);
-//int unsetenv(const char *name);
-
-// ADD PIPE SUPPORT FOR SHELL 
-// SUPPORT REQS OF HW PROBLEM 8.26 IN COMP SYS TEXTBOOK 
-
 #include "read_a_line.h" 
 
 #define linebuffersize 1024; 
@@ -14,12 +6,14 @@
 #define clear() printf("\033[H\033[J") 
 
 static volatile int keepRunning = 1; 
- 
+
 // function declarations for builtins
 int cd(char **args);
 int help(char **args); 
 int quit(char **args);
 int echo_path();
+
+pid_t current_pid; // this is a global pid that will point to current process
 
 void init_shell() {
     clear(); 
@@ -41,6 +35,7 @@ void init_shell() {
 void print_man() {
     printf("\n------ Laf Shell Manual ------\n"); 
     printf("--- List of Supported Cmds ---\n\n"); 
+    printf("Man Page /IngridRumbaughShell/src/man\n");
     printf("lafsh>> quit\n");
     // translate (fork) to man -l nameofmanfile.txt
     printf("lafsh>> help\n"); 
@@ -133,93 +128,115 @@ char *parse_equals(char *temp_arg) {
 }
 
 int fork_pipes2(char *args[]) {
-    pid_t pid1;
-    int pipefd[2]; 
-    int status; 
-    // create a pipe 
-    pipe(pipefd); 
-    // create 1st process
-    pid1 = fork(); 
-    if (pid1 == 0) {
-        dup2(pipefd[1], STDOUT_FILENO);
-        close(pipefd[0]); 
-        fprintf(stderr, "About to execute\n");
-        execvp(args[0], args);
+    pid_t pid[3];
+    int n;
+    int ab[2], bc[2], ca[2];
+
+    pid[0] = fork();
+    if(pid[0] == 0) {
+        // Process A reads from process C
+        dup2(ca[0], STDIN_FILENO);
+        // Process A writes to process B
+        dup2(ab[1], STDOUT_FILENO);
+        // Essential: close all other pipes and copies of pipes
+        for(n = 0; n < 2; n++) { 
+            close(ab[n]); 
+            close(bc[n]); 
+            close(ca[n]); 
+        }
+
+        char ** args2 = parse_a_line(args[0]);
+        execvp(args2[0], args2);
         perror("exec");
-        return 1; 
+        //return 1; 
+        // quit so your child doesn't end up in the main program
+        exit(0);
     }
 
-    close(pipefd[0]);
-    close(pipefd[1]);
+    pid[1] = fork();
+    if(pid[1] == 0) {
+        // Process B reads from process A
+        dup2(ab[0], STDIN_FILENO);
+        // Process B writes to process C
+        dup2(bc[1], STDOUT_FILENO);
+        // Essential: close all other pipes and copies of pipes
+        for(n = 0; n < 2; n++) { 
+            close(ab[n]); 
+            close(bc[n]); 
+            close(ca[n]); 
+        }
 
-    waitpid(pid1, &status, 0); 
-    return 0;
+        char ** args3 = parse_a_line(args[0]);
+        execvp(args3[0], args3);
+        // quit so your child doesn't end up in the main program
+        exit(0);
+    }
+
+    pid[2] = fork();
+    if(pid[2] == 0) {
+        // Process C reads from process B
+        dup2(bc[0], STDIN_FILENO);
+        // Process C writes to process A
+        dup2(ca[1], STDOUT_FILENO);
+        // Essential: close all other pipes and copies of pipes
+        for(n= 0; n < 2; n++) { 
+            close(ab[n]); 
+            close(bc[n]); 
+            close(ca[n]); 
+        }
+
+        char ** args1 = parse_a_line(args[0]);
+        execvp(args1[0], args1);
+        // quit so your child doesn't end up in the main program
+        exit(0);
+    }
+
+// Only the parent will be running outside of those if statements.
+// Essential: close all other pipes and copies of pipes
+    for(n = 0; n < 2; n++) { 
+        close(ab[n]); 
+        close(bc[n]); 
+        close(ca[n]); 
+    }
+
+    for(n = 0; n < 3; n++) {
+        int status;
+        waitpid(pid[n], &status, 0);
+        printf("Child %d exited with status %d\n", n, WEXITSTATUS(status));
+    }
 }
 
-int parse_pipe(char *temp_line) {
-    fprintf(stderr, "Parsing Pipe Cmd\n");
-    char delim1[] = " |"; 
-    char delim2[] = "|";
-    int iter;
-    char * line_nospaces;
-    char * line_args;
-    char * arg1;
-    char * arg2;
-    char * arg3;
-    char * arg4; 
-    char * all_args[4];
+int parse_pipe(char *line, char *delim1) {
 
-    line_nospaces = strtok(temp_line, delim1); 
-    arg1 = line_nospaces; 
-    fprintf(stderr,"Arg1 = %s\n\n",arg1);
+    fprintf(stderr, "Parsing Pipe Cmd\n");
+    int buffer_size = tokenbuffersize;
+    char **tokens = malloc(buffer_size *sizeof(char*)); 
+    int line_position = 0;  
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "Memory Allocation Error\n"); 
+        exit(EXIT_FAILURE); 
+    }
     
-    iter = 0;
-    // while (line_nospaces != NULL) {
-        line_nospaces = strtok(NULL, delim1); 
-        arg2 = line_nospaces; 
-        line_nospaces = strtok(NULL, delim1); 
-        arg3 = line_nospaces; 
-        line_nospaces = strtok(NULL, delim1); 
-        arg4 = line_nospaces; 
-        fprintf(stderr,"Arg2 = %s\n\n",arg2);
-        fprintf(stderr,"Arg3 = %s\n\n",arg3);
-        fprintf(stderr,"Arg4 = %s\n\n",arg4); 
-    // } 
-    // iter = 0;
-    // for (line_args = strtok(line_nospaces, delim2); line_args != NULL; line_args = strtok(NULL, delim2)) {
-    //     if (iter == 0) {
-    //         arg1 = line_args; 
-    //         fprintf(stderr, "Arg 1 = %s\n",arg1);
-    //         //strcpy(arg1, line_args); 
-    //     }
-    //     else if (iter == 1) {
-    //         arg2 = line_args;
-    //         fprintf(stderr, "Arg 2 = %s\n",arg2);
-    //         //strcpy(arg2, line_args); 
-    //     }
-    //     else if (iter == 2) {
-    //         arg3 = line_args; 
-    //         fprintf(stderr, "Arg 3 = %s\n",arg3);
-    //         //strcpy(arg3, line_args); 
-    //     }
-    //     else if (iter == 3) {
-    //         arg4 = line_args; 
-    //         fprintf(stderr, "Arg 4 = %s\n",arg4);
-    //         //strcpy(arg4, line_args); 
-    //     }
-    //     iter ++;
-    // }
-    if (arg1 != NULL)
-        all_args[0] = arg1; 
-    if (arg2 != NULL)
-        all_args[1] = arg2;
-    if (arg3 != NULL)
-        all_args[2] = arg3; 
-    if (arg4 != NULL)
-        all_args[3] = arg4; 
-    //fprintf(stderr,"Line_NoSpaces = %s\n\n",line_nospaces);
-    fprintf(stderr,"Calling fork_pipes2 now\n"); 
-    fork_pipes2(all_args);
+        token = strtok(line, delim1);
+        while (token != NULL) {
+            tokens[line_position] = token;
+            line_position ++; 
+            // if we've exceeded the buffer, 
+            if (line_position >= buffer_size) {
+                buffer_size += tokenbuffersize;
+                tokens = realloc(tokens, buffer_size *sizeof(char*)); 
+                if (!tokens) {
+                    fprintf(stderr, "Memmory Allocation Error\n"); 
+                    exit(EXIT_FAILURE); 
+                }
+            }
+            token = strtok(NULL, delim1); 
+        }
+    
+    tokens[line_position] = NULL;
+    fork_pipes2(tokens);
     return 0;
 }
 
@@ -238,7 +255,7 @@ char **parse_a_line(char *line) {
         parse_equals(line);
  
     } else if (strstr(line, "|") != NULL) {
-        parse_pipe(line);
+        parse_pipe(line, "|");
     } else {
         token = strtok(line, tokendelims);
         while (token != NULL) {
@@ -286,6 +303,7 @@ int launch_shell(char **args) {
     pid = fork(); 
     if (pid == 0) {
         // start child process 
+        current_pid = pid;
         if (execvp(args[0], args) == -1) {
             perror("Error Occurred");
         }
@@ -304,7 +322,9 @@ int launch_shell(char **args) {
 void signalHandler(int signo) {
     if (signo == SIGINT) {
         fprintf(stderr, "received SIGINT\n");
-        keepRunning = 0; 
+        keepRunning = 0;  
+        // kill it using global pid 
+        kill(current_pid, SIGKILL); 
     }
 }
 

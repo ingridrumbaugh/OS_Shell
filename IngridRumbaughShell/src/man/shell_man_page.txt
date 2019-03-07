@@ -1,0 +1,185 @@
+                           Laf Shell User Manual 
+                     Lafayette College, Computer Science 
+                     Ingrid Rumbaugh, rumbaugi@lafayette.edu 
+------------------------------------------------------------------------------
+NAME 
+   >> cd [new dir]
+    
+SYNOPSIS
+    Change the current working directory or return to home path. 
+
+OPTIONS
+CHANGE TO A NEW WORKING DIRECTORY 
+    >> cd testdirectory
+MOVE TO HOME DIRECTORY 
+    >> cd
+MOVE UP ONE FOLDER IN THE DIRECTORY 
+    >> cd .. 
+
+BUGS
+    None Reported
+
+AUTHOR
+    Ingrid Rumbaugh
+
+COPYRIGHT 
+    GPL v3.0
+
+SEE ALSO 
+    >> quit
+------------------------------------------------------------------------------
+NAME 
+    >> help
+    
+SYNOPSIS
+    Prints a brief help message displaying some common commands as well
+    as where to find the full man page. 
+
+BUGS
+    None Reported 
+
+AUTHOR
+    Ingrid Rumbaugh 
+
+COPYRIGHT 
+    GPL v3.0 
+------------------------------------------------------------------------------
+NAME
+    >> quit 
+
+SYNOPSIS
+    This command exits the lafshell and returns to the linux terminal.
+    
+BUGS
+    Occasionally after some pipe commands have been executed, the quit command
+    hangs and does not exit the shell properly. 
+
+AUTHOR
+    Ingrid Rumbaugh 
+    
+COPYRIGHT
+    GPL v3.0
+    
+SEE ALSO
+    Signal Handler 
+------------------------------------------------------------------------------
+NAME
+    >> echo $PATH 
+    
+SYNOPSIS
+    This command behaves as it would in a normal Linux shell. It prints the 
+    current PATH variable in the .bashrc. 
+    
+BUGS
+    None Reported 
+    
+AUTHOR
+    Ingrid Rumbaugh 
+    
+COPYRIGHT 
+    GPL v3.0 
+
+SEE ALSO
+    Setting Environment Variables 
+------------------------------------------------------------------------------
+NAME
+    Setting Environment Variables 
+
+SYNOPSIS
+    This functionality allows the user to set and unset environment variables
+    within the current running shell. 
+
+OPTIONS 
+SET A NEW ENVIRONMENT VARIABLE 
+    >> ENVVAR=newvar
+
+UNSET AN EXISTING ENVIRONMENT VARIABLE 
+    >> ENVVAR=
+
+BUGS 
+    None Reported
+    
+AUTHOR 
+    Ingrid Rumbaugh
+
+COPYRIGHT 
+    GPL v3.0
+    
+SEE ALSO
+    echo $PATH, printenv
+------------------------------------------------------------------------------
+NAME 
+    >> printenv
+
+SYNOPSIS
+    Prints all of the current environment variables accessible to the shell.
+
+BUGS 
+    None Reported
+
+AUTHOR
+    Ingrid Rumbaugh
+
+COPYRIGHT 
+    GPL v3.0
+
+SEE ALSO 
+    Setting Environment Variables, echo $PATH 
+------------------------------------------------------------------------------
+NAME
+    Pipe Functionality 
+
+SYNOPSIS
+    This shell supports piping commands. The exit of the 1st pipe is the 
+    entrance to the 2nd pipe, and so on. This shell uses fork(), execvp(), and
+    pid as well as file descriptors to implement this functionality. 
+    
+OPTIONS (EXAMPLES)
+    >> ls -l | sort | uniq
+    >> ls -l | more 
+
+BUGS
+    The functionality works as it would in a normal Linux shell, however 
+    after executing, there is occasionally a Segmentation Fault. 
+    This issue is currently being investigated. 
+    
+AUTHOR
+    Ingrid Rumbaugh 
+    
+COPYRIGHT 
+    GPL v3.0
+------------------------------------------------------------------------------
+NAME 
+    Signal Handler, Ctrl+C
+
+SYNOPSIS 
+    A signal handler is in place to handle a ^C from the user. 
+    This is a SIGINT signal.
+    If there is a foreground job running, it will be killed and the shell
+    will be exited. 
+
+BUGS 
+    This has hung up before instead of killing the program. This error is 
+    infrequent, but is still being investigated.
+
+AUTHOR
+    Ingrid Rumbaugh
+
+COPYRIGHT
+    GPL v3.0 
+
+SEE ALSO
+    quit 
+------------------------------------------------------------------------------
+Linux                   Last Change: MARCH 2019 
+
+
+
+
+
+
+
+
+
+
+
