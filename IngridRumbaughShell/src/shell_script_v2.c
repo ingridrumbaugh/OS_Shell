@@ -1,10 +1,12 @@
 #include "shell_script_v2.h" 
 
+// define buffers for writing things to memory 
 #define linebuffersize 1024; 
 #define tokenbuffersize 64; 
 #define tokendelims " \t\r\n\a"
 #define clear() printf("\033[H\033[J") 
 
+// used for the catching the ^C signal in signal handler 
 static volatile int keepRunning = 1; 
 
 // function declarations for builtins
@@ -13,8 +15,10 @@ int help(char **args);
 int quit(char **args);
 int echo_path();
 
-pid_t current_pid; // this is a global pid that will point to current process
+// this is a global pid that will point to current process
+pid_t current_pid; 
 
+// this is what is printed when the user starts the shell 
 void init_shell() {
     clear(); 
     printf("\n\n\n|------------------------------|");
@@ -32,6 +36,8 @@ void init_shell() {
     printf("|------------------------------|\n\n\n");
 }
 
+// this is what appears when the user types >> help 
+// directs the user to the full manual and provides add'l info 
 void print_man() {
     printf("\n------ Laf Shell Manual ------\n"); 
     printf("--- List of Supported Cmds ---\n\n"); 
@@ -46,6 +52,7 @@ void print_man() {
     return;
 }
 
+// these are the list of builtin commands 
 char *listofcommands[] = {
     "quit",
     "help",
@@ -53,6 +60,7 @@ char *listofcommands[] = {
     "$PATH"
 };
 
+// these are the addresses of the 1st element of array for builtins
 int (*builtin_func[]) (char**) = {
     &quit,
     &help,
@@ -64,6 +72,8 @@ int get_num_commands() {
     return sizeof(listofcommands) / sizeof(char *); 
 }
 
+// define a builtin command 
+// change working directory with >> cd command 
 int cd(char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "Laf Shell: Expected Arg to \"cd\"\n"); 
@@ -75,20 +85,27 @@ int cd(char **args) {
     return 1;
 }
 
+// define a builtin command 
+// display additional info when user types help cmd 
 int help(char **args) {
     print_man(); 
     // need to print man.txt fork to location 
     return 1;
 }
 
+// quit the shell 
 int quit(char **args) {
+    exit(2);
     return 0; 
 }
 
+// print the current path using getenv()
 int echo_path() {
     printf("PATH: %s\n", getenv("PATH")); 
 }
 
+// set a new environment variable 
+// if it already exists, unset it 
 void set_env(char *name, char *val) {
     if (val[0] == 0) {
         unsetenv(name); 
@@ -284,7 +301,7 @@ int trident(char **args) {
         return 1; 
     }
     for (i = 0; i < get_num_commands(); i ++) {
-        
+        // check if the line contains a builtin command 
         if (strcmp(args[0], listofcommands[i]) == 0) { 
             return (*builtin_func[i])(args);
         } else if (args[1] != NULL) {
